@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
 {
 	Initialize();
 	char conf_name[1024];
+	conf_name[0] = '\0';
 	size_t optind = 1;
 	enum { NONE, NEW } command = NONE;
 	while(optind < argc)
@@ -184,7 +185,12 @@ int main(int argc, char *argv[])
 
 	int remaining_args = argc - optind;
 	char cmd[1024];
-	sprintf(cmd, "vim -u %s/%svimrc", MVIM_DIR, conf_name);
+
+	if(conf_name[0] != '\0')
+		sprintf(cmd, "vim -u %s/%svimrc", MVIM_DIR, conf_name);
+	else
+		sprintf(cmd, "vim");
+
 	if(remaining_args > 0)
 	{
 		char *vim_args[remaining_args];
