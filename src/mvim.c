@@ -82,7 +82,6 @@ static inline int contains_in_db(const char* path, const char* entity)
 	{
 		remove_char(line, line, '\n');
 		int cmp_res = strcmp(line, entity);
-		printf("strcmp(%s, %s) = %d \n", line, entity, cmp_res);
 		if(cmp_res == 0)
 		{
 			ret = 0;
@@ -171,8 +170,16 @@ int main(int argc, char *argv[])
 			list_configs(MVIM_DATA_BASE);
 			exit(EXIT_SUCCESS);
 		}
-		else
-			break;
+		else // we assume it is a config name
+		{
+			if(contains_in_db(MVIM_DATA_BASE, conf_name) == 0)
+				break;
+			else
+			{
+				printf("Config called %s not exits!\n", conf_name);
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 
 	int remaining_args = argc - optind;
