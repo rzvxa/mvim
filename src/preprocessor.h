@@ -26,8 +26,8 @@ int load_include_file(const char *path, char *buffer)
 
 void insert_mvim_configuration(char *source, char *dest, const char *conf_dir)
 {
-	const char template[] = "let &rtp = substitute(&rtp, '\\.vim\\>', '%s', 'g')\n%s";
-	sprintf(dest, template, conf_dir, source);
+	const char temp[] = "let &rtp = substitute(&rtp, '\\.vim\\>', '%s', 'g')\n%s";
+	sprintf(dest, temp, conf_dir, source);
 }
 
 #define CDIR "__cdir__"
