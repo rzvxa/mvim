@@ -1,14 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <bsd/string.h>
 
 #ifdef linux
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
 
+#include "preprocessor.h"
+
+#define MVIM_DIR_NAME ".mvim"
+#define MVIM_DB_NAME ".database"
+#define MVIM_TEMP_NAME ".tmp"
+#define MVIM_SHARE_NAME "share"
+
+static char* HOME_DIR;
 static char* MVIM_DIR;
+static char* MVIM_TEMP;
 static char* MVIM_DATA_BASE;
+static char* MVIM_SHARE_DIR;
 
 static inline int remove_char(const char *src,char *dest,char c)
 {
@@ -32,20 +43,32 @@ static inline int remove_char(const char *src,char *dest,char c)
 static inline void Initialize()
 {
 	char *home = getenv("HOME");
+	HOME_DIR = malloc(strlen(home) + 1);
+	strcpy(HOME_DIR, home);
 	if(home == NULL)
 		exit(EXIT_FAILURE);
-	const char mvim_dir[] = "/.mvim";
+	const char mvim_dir[] = "/" MVIM_DIR_NAME;
 	MVIM_DIR = malloc(strlen(home) + strlen(mvim_dir) + 1);
 	strcpy(MVIM_DIR, home);
 	strcat(MVIM_DIR, mvim_dir);
-	const char mvim_data_base[] = "/.database";
+	const char mvim_data_base[] = "/" MVIM_DB_NAME;
 	MVIM_DATA_BASE = malloc(strlen(MVIM_DIR) + strlen(mvim_data_base) + 1);
 	strcpy(MVIM_DATA_BASE, MVIM_DIR);
 	strcat(MVIM_DATA_BASE, mvim_data_base);
+	const char mvim_temp[] = "/" MVIM_TEMP_NAME;
+	MVIM_TEMP = malloc(strlen(MVIM_DIR) + strlen(mvim_temp) + 1);
+	strcpy(MVIM_TEMP, MVIM_DIR);
+	strcat(MVIM_TEMP, mvim_temp);
+	const char mvim_share[] = "/" MVIM_SHARE_NAME;
+	MVIM_SHARE_DIR = malloc(strlen(MVIM_DIR) + strlen(mvim_share) + 1);
+	strcpy(MVIM_SHARE_DIR, MVIM_DIR);
+	strcat(MVIM_SHARE_DIR, mvim_share);
 #ifdef linux
 	struct stat st = {0};
 	if(stat(MVIM_DIR, &st) == -1)
 		mkdir(MVIM_DIR, 0777);
+	if(stat(MVIM_TEMP, &st) == -1)
+		mkdir(MVIM_TEMP, 0777);
 #endif
 }
 
@@ -125,6 +148,48 @@ void list_configs(const char* path)
 	if(flag == 0) printf(empty_or_not_found);
 }
 
+static inline void process_file(const char * conf, const char * relative_dir, char * save_path)
+{
+	FILE * fp;
+	char buffer1[102400];
+	char buffer2[102400];
+	buffer1[0] = buffer2[0] = '\0';
+	char chr;
+
+	fp = fopen(conf, "r");
+	if(fp == NULL)
+	{
+		printf("Could not read config file!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	while((chr = getc(fp)) != EOF)
+		strcat(buffer1, &chr);
+	fclose(fp);
+
+	char *dir;
+
+	dir = malloc(strlen(HOME_DIR) + strlen(relative_dir) + 2);
+	sprintf(dir, "%s/%s", HOME_DIR, relative_dir);
+
+	insert_mvim_configuration(buffer1, buffer2, relative_dir);
+	constant_vars_t cvs;
+	cvs.cdir = malloc(strlen(dir) + 1);
+	strcpy(cvs.cdir, dir);
+	handle_constant_vars(buffer2, buffer1, &cvs);
+	handle_at_includes(buffer1, buffer2, MVIM_SHARE_DIR);
+
+	fp = fopen(save_path, "w");
+	if(fp == NULL)
+	{
+		printf("Could not read config file!");
+		exit(EXIT_FAILURE);
+	}
+
+	fprintf(fp, "%s", buffer2);
+	fclose(fp);
+}
+
 int main(int argc, char *argv[])
 {
 	Initialize();
@@ -157,6 +222,12 @@ int main(int argc, char *argv[])
 			fp = fopen(new_config_path, "w");
 			fclose(fp);
 			printf("config file created at %s\n", new_config_path);
+			char new_gconfig_path[1024];
+			sprintf(new_gconfig_path, "%s/g%svimrc", MVIM_DIR, current);
+			printf("%s\n", new_gconfig_path);
+			fp = fopen(new_gconfig_path, "w");
+			fclose(fp);
+			printf(" gvim config file created at %s\n", new_gconfig_path);
 			free(new_config_path);
 			add_to_database(MVIM_DATA_BASE, current);
 			printf("added new config to the database\n");
@@ -186,8 +257,26 @@ int main(int argc, char *argv[])
 	int remaining_args = argc - optind;
 	char cmd[1024];
 
+	char conf_path[512];
+	char pro_conf_path[512];
+	char gconf_path[512];
+	char pro_gconf_path[512];
+	char dir_path[512];
+
+	sprintf(conf_path, "%s/%svimrc", MVIM_DIR, conf_name);
+	sprintf(gconf_path, "%s/g%svimrc", MVIM_DIR, conf_name);
+
+	sprintf(pro_conf_path, "%s/%scompiled", MVIM_TEMP, conf_name);
+	sprintf(pro_gconf_path, "%s/g%scompiled", MVIM_TEMP, conf_name);
+
+	sprintf(dir_path, "%s/%svim", MVIM_DIR_NAME, conf_name);
+
+	process_file(conf_path, dir_path, pro_conf_path);
+	process_file(conf_path, dir_path, pro_gconf_path);
+
+
 	if(conf_name[0] != '\0')
-		sprintf(cmd, "vim -u %s/%svimrc", MVIM_DIR, conf_name);
+		sprintf(cmd, "vim -u %s -U %s", pro_conf_path, pro_gconf_path);
 	else
 		sprintf(cmd, "vim");
 

@@ -1,5 +1,5 @@
 mvim: src/mvim.c
-	clang -o bin/mvim src/mvim.c
+	clang -o bin/mvim src/mvim.c -Isrc -lpcre
 
 PREFIX ?= /usr
 
