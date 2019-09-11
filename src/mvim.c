@@ -15,10 +15,12 @@
 #define MVIM_TEMP_NAME ".tmp"
 #define MVIM_SHARE_NAME "share"
 
+#define DB_VERSION 1
+
 static char* HOME_DIR;
 static char* MVIM_DIR;
 static char* MVIM_TEMP;
-static char* MVIM_DATA_BASE;
+static char* MVIM_DB;
 static char* MVIM_SHARE_DIR;
 
 static inline int remove_char(const char *src,char *dest,char c)
@@ -52,9 +54,9 @@ static inline void Initialize()
 	strcpy(MVIM_DIR, home);
 	strcat(MVIM_DIR, mvim_dir);
 	const char mvim_data_base[] = "/" MVIM_DB_NAME;
-	MVIM_DATA_BASE = malloc(strlen(MVIM_DIR) + strlen(mvim_data_base) + 1);
-	strcpy(MVIM_DATA_BASE, MVIM_DIR);
-	strcat(MVIM_DATA_BASE, mvim_data_base);
+	MVIM_DB = malloc(strlen(MVIM_DIR) + strlen(mvim_data_base) + 1);
+	strcpy(MVIM_DB, MVIM_DIR);
+	strcat(MVIM_DB, mvim_data_base);
 	const char mvim_temp[] = "/" MVIM_TEMP_NAME;
 	MVIM_TEMP = malloc(strlen(MVIM_DIR) + strlen(mvim_temp) + 1);
 	strcpy(MVIM_TEMP, MVIM_DIR);
@@ -74,7 +76,16 @@ static inline void Initialize()
 
 static inline void add_to_database(const char *path, char const *name)
 {
+	// TODO improve is_new mechanic
+	// TODO so it check existance of file without opening it again
+	ushort is_new = 0;
 	FILE *file;
+
+	file = fopen(path, "r");
+	if(file == NULL) // it don't exists
+		is_new = 1;
+	else
+		fclose(file);
 
 	file = fopen(path, "a");
 	if(file == NULL)
@@ -83,7 +94,13 @@ static inline void add_to_database(const char *path, char const *name)
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(file, "%s\n", name);
+	char db_buf[512];
+	db_buf[0] = '\0';
+	if(is_new)
+		sprintf(db_buf, "%d\n", DB_VERSION);
+	strcat(db_buf, name);
+
+	fprintf(file, "%s\n", db_buf);
 
 	fclose(file);
 }
@@ -203,7 +220,7 @@ int main(int argc, char *argv[])
 		++optind;
 		if(command == NEW)
 		{
-			if(contains_in_db(MVIM_DATA_BASE, current) == 0)
+			if(contains_in_db(MVIM_DB, current) == 0)
 			{
 				printf("config called %s already exists\n", current);
 				exit(EXIT_FAILURE);
@@ -229,7 +246,7 @@ int main(int argc, char *argv[])
 			fclose(fp);
 			printf(" gvim config file created at %s\n", new_gconfig_path);
 			free(new_config_path);
-			add_to_database(MVIM_DATA_BASE, current);
+			add_to_database(MVIM_DB, current);
 			printf("added new config to the database\n");
 			printf("For launching vim using this config call mvim %s\n", current);
 			exit(EXIT_SUCCESS);
@@ -239,12 +256,12 @@ int main(int argc, char *argv[])
 			command = NEW;
 		else if(strncmp(current, "ls", 2) == 0)
 		{
-			list_configs(MVIM_DATA_BASE);
+			list_configs(MVIM_DB);
 			exit(EXIT_SUCCESS);
 		}
 		else // we assume it is a config name
 		{
-			if(contains_in_db(MVIM_DATA_BASE, conf_name) == 0)
+			if(contains_in_db(MVIM_DB, conf_name) == 0)
 				break;
 			else
 			{
