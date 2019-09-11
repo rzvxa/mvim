@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 	char conf_name[1024];
 	conf_name[0] = '\0';
 	size_t optind = 1;
-	enum { NONE, NEW } command = NONE;
+	enum { NONE, NEW, REMOVE } command = NONE;
 	while(optind < argc)
 	{
 		char * current = argv[optind];
@@ -251,9 +251,15 @@ int main(int argc, char *argv[])
 			printf("For launching vim using this config call mvim %s\n", current);
 			exit(EXIT_SUCCESS);
 		}
-		strcpy(conf_name, current);
+		else if(command == REMOVE)
+		{
+			printf("going to remove %s\n", current);
+			exit(EXIT_SUCCESS);
+		}
 		if(strncmp(current, "--new", 6) == 0)
 			command = NEW;
+		else if(strncmp(current, "--remove", 9) == 0)
+			command = REMOVE;
 		else if(strncmp(current, "ls", 2) == 0)
 		{
 			list_configs(MVIM_DB);
@@ -261,39 +267,48 @@ int main(int argc, char *argv[])
 		}
 		else // we assume it is a config name
 		{
-			if(contains_in_db(MVIM_DB, conf_name) == 0)
-				break;
+			if(current[0] == '-')
+			{
+				conf_name[0] = '\0';
+				--optind;
+			}
+			else if(contains_in_db(MVIM_DB, current) == 0)
+				strcpy(conf_name, current);
 			else
 			{
-				printf("Config called %s not exits!\n", conf_name);
+				printf("Config called %s not exits!\n", current);
 				exit(EXIT_FAILURE);
 			}
+
+			break;
 		}
 	}
 
 	int remaining_args = argc - optind;
 	char cmd[1024];
 
-	char conf_path[512];
-	char pro_conf_path[512];
-	char gconf_path[512];
-	char pro_gconf_path[512];
-	char dir_path[512];
-
-	sprintf(conf_path, "%s/%svimrc", MVIM_DIR, conf_name);
-	sprintf(gconf_path, "%s/g%svimrc", MVIM_DIR, conf_name);
-
-	sprintf(pro_conf_path, "%s/%scompiled", MVIM_TEMP, conf_name);
-	sprintf(pro_gconf_path, "%s/g%scompiled", MVIM_TEMP, conf_name);
-
-	sprintf(dir_path, "%s/%svim", MVIM_DIR_NAME, conf_name);
-
-	process_file(conf_path, dir_path, pro_conf_path);
-	process_file(conf_path, dir_path, pro_gconf_path);
-
-
 	if(conf_name[0] != '\0')
+	{
+		char conf_path[512];
+		char pro_conf_path[512];
+		char gconf_path[512];
+		char pro_gconf_path[512];
+		char dir_path[512];
+
+		sprintf(conf_path, "%s/%svimrc", MVIM_DIR, conf_name);
+		sprintf(gconf_path, "%s/g%svimrc", MVIM_DIR, conf_name);
+
+		sprintf(pro_conf_path, "%s/%scompiled", MVIM_TEMP, conf_name);
+		sprintf(pro_gconf_path, "%s/g%scompiled", MVIM_TEMP, conf_name);
+
+		sprintf(dir_path, "%s/%svim", MVIM_DIR_NAME, conf_name);
+
+		process_file(conf_path, dir_path, pro_conf_path);
+		process_file(conf_path, dir_path, pro_gconf_path);
+
+
 		sprintf(cmd, "vim -u %s -U %s", pro_conf_path, pro_gconf_path);
+	}
 	else
 		sprintf(cmd, "vim");
 
