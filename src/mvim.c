@@ -9,6 +9,7 @@
 #endif
 
 #include "preprocessor.h"
+#include "helper.h"
 
 #define MVIM_DIR_NAME ".mvim"
 #define MVIM_DB_NAME ".database"
@@ -135,6 +136,37 @@ static inline int contains_in_db(const char* path, const char* entity)
 	return ret;
 }
 
+static inline void remove_from_database(const char *path, char const *name)
+{
+	if(contains_in_db(path, name) != 0)
+	{
+		printf("Something went wrong in removing config called ''%s' from database!\n", name);
+		exit(EXIT_FAILURE);
+	}
+
+	FILE * fp;
+
+	char buffer[2048];
+	char name_buffer[512];
+	char chr;
+
+	fp = fopen(path, "r");
+	if(fp == NULL)
+	{
+		printf("Could not create or open database file\n");
+		exit(EXIT_SUCCESS);
+	}
+	// TODO remove entity from db and write the result in file.
+	while((chr = getc(fp)) != EOF)
+		strcat(buffer, &chr);
+	sprintf(name_buffer, "%s\n", name);
+	char *result = replace_word(buffer, name_buffer, "");
+	freopen(NULL, "w", fp);
+	fprintf(fp, "%s", result);
+	fflush(fp);
+	fclose(fp);
+}
+
 void list_configs(const char* path)
 {
 	FILE *fp;
@@ -253,7 +285,66 @@ int main(int argc, char *argv[])
 		}
 		else if(command == REMOVE)
 		{
-			printf("going to remove %s\n", current);
+			if(contains_in_db(MVIM_DB, current) != 0)
+			{
+				printf("config file '%s' does not exist!\n", current);
+				exit(EXIT_FAILURE);
+			}
+			printf(ANSI_COLOR_YELLOW "Do you really want to remove '%s' config?(y/N)" ANSI_COLOR_RESET, current);
+			char do_rm;
+			scanf("%c", &do_rm);
+			if(do_rm == '\n')
+				do_rm = 'n';
+			if(do_rm >= 'A' && do_rm <= 'Z')
+				do_rm += 32;
+			if(do_rm == 'n')
+			{
+				printf("Aborting...\n");
+				exit(EXIT_FAILURE);
+			}
+			char *dir_path;
+			int len = strlen(MVIM_DIR) + strlen(current) + strlen("vim") + 2;
+			dir_path = malloc(len);
+			sprintf(dir_path, "%s/%svim", MVIM_DIR, current);
+			dir_path[len] = '\0';
+			int dirrm_res = remove_directory(dir_path);
+			if(!dirrm_res)
+				printf(ANSI_COLOR_GREEN "Removed directory '%s'\n" ANSI_COLOR_RESET, dir_path);
+			else
+				printf(ANSI_COLOR_RED "Could not remove '%s'\n" ANSI_COLOR_RESET, dir_path);
+			char * config_path;
+			char * gconfig_path;
+			config_path = malloc(len = strlen(MVIM_DIR) + strlen(current) + strlen("vimrc") + 2);
+			sprintf(config_path, "%s/%svimrc", MVIM_DIR, current);
+			config_path[len] = '\0';
+			int crm_res = unlink(config_path);
+			if(!crm_res)
+				printf(ANSI_COLOR_GREEN"Removed file '%s'\n" ANSI_COLOR_RESET, config_path);
+			else
+				printf(ANSI_COLOR_RED "Could not remove file '%s'\n" ANSI_COLOR_RESET, config_path);
+			gconfig_path = malloc(len = strlen(MVIM_DIR) + strlen(current) + strlen("vimrc") + 3);
+			sprintf(gconfig_path, "%s/g%svimrc", MVIM_DIR, current);
+			gconfig_path[len] = '\0';
+			int gcrm_res = unlink(gconfig_path);
+			if(!gcrm_res)
+				printf(ANSI_COLOR_GREEN "Removed file '%s'\n" ANSI_COLOR_RESET, gconfig_path);
+			else
+				printf(ANSI_COLOR_RED "Could not remove file '%s'\n" ANSI_COLOR_RESET, gconfig_path);
+			remove_from_database(MVIM_DB, current);
+			printf(ANSI_COLOR_GREEN "Removed '%s' from database!\n" ANSI_COLOR_RESET, current);
+			printf("Finalizing...\n");
+			if(!dirrm_res && !crm_res && !gcrm_res)
+				printf(ANSI_COLOR_GREEN "Removed '%s' config successfuly!\n" ANSI_COLOR_RESET, current);
+			else
+			{
+				printf(
+						ANSI_COLOR_RED
+						"It was not a clean remove action try cleaning up these file(s):\n"
+						ANSI_COLOR_RESET);
+				if(dirrm_res != 0) printf("%s\n", dir_path);
+				if(crm_res != 0) printf("%s\n", config_path);
+				if(gcrm_res != 0) printf("%s\n", gconfig_path);
+			}
 			exit(EXIT_SUCCESS);
 		}
 		if(strncmp(current, "--new", 6) == 0)
@@ -322,7 +413,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("%s\nShould i run?(Y/n)\n", cmd);
+	printf(ANSI_COLOR_YELLOW "%s\nShould i run?(Y/n)\n" ANSI_COLOR_RESET, cmd);
 	char do_run;
 	scanf("%c", &do_run);
 
