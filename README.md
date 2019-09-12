@@ -40,5 +40,5 @@ Install it `sudo make intall`
 ## Hello, world
 Let's make a hellow world config called hello_world.
 Just call `mvim --new hello_world` to create a hello_world configuration in ~/.mvim directory.
-go to "~/.mvim/hello_worldvimrc" file and add `echom \__cdir\__` to it, now run vim with this configuration file using `mvim hello_world`.
+go to `~/.mvim/hello_worldvimrc` file and add `echom __cdir__` to it, now run vim with this configuration file using `mvim hello_world`.
 Check the messages, it printed path to vim directory in use by vim instance.
