@@ -42,3 +42,12 @@ Let's make a hellow world config called hello_world.
 Just call `mvim --new hello_world` to create a hello_world configuration in ~/.mvim directory.
 go to `~/.mvim/hello_worldvimrc` file and add `echom __cdir__` to it, now run vim with this configuration file using `mvim hello_world`.
 Check the messages, it printed path to vim directory in use by vim instance.
+
+## Plugin managers
+All plugin managers should be compatible with MVIM but if you want to have diffrent versions for plugins in diffrent configs i recommand you to use `vim-plug` i don't know about vundle or other plugin managers but you need to specify plugins directory for `vim-plug` i just use this:
+
+	call plug#begin(__cdir__ . "/plugged")
+	Plug 'prabirshrestha/vim-lsp'
+	call plug#end()
+and it will use mvim config directory for plugins.
+If you know how to use other plugin managers like this just let me know!
