@@ -16,8 +16,8 @@ you can include it in your config like this:
 
 and it will write the contents of dracula.vim file instead if this line.
 
-Also there is some constant variables like __cdir__ for getting config directory vim is running on.
-try echom __cdir__ in your mvim config file.
+Also there is some constant variables like `__cdir__` for getting config directory vim is running on.
+try echom `__cdir__` in your mvim config file.
 
 Honestly it's all for now, i have plans to add some special blocks to run pythonand maybe some other scripting languages like lua, and some kind of configuration file to add third party processors too, mvim will just pass the content to your program and the program can process it and return output and we are going to pass it into them like a chain and it's all will result in the config we will going to feed into vim like a modular transcompiler for vim language. It opens up doors for plugins completly based on these features.
 
@@ -40,5 +40,5 @@ Install it `sudo make intall`
 ## Hello, world
 Let's make a hellow world config called hello_world.
 Just call `mvim --new hello_world` to create a hello_world configuration in ~/.mvim directory.
-go to "~/.mvim/hello_worldvimrc" file and add `echom \_\_cdir\_\_` to it, now run vim with this configuration file using `mvim hello_world`.
+go to "~/.mvim/hello_worldvimrc" file and add `echom \__cdir\__` to it, now run vim with this configuration file using `mvim hello_world`.
 Check the messages, it printed path to vim directory in use by vim instance.
