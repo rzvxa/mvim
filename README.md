@@ -3,10 +3,10 @@ Multi VIM, light weight VIM configuration manager
 
 ## What is it?
 It's a layer on top of vim for making managing and having multiple vimrc files easier.
-You will create a new vim configuration using mvim --new config_name and it will create it's vimrc and vim directory inside of .mvim directory than you can launch vim with your config file using mvim config_name or running gvim using mvim config_name -g.
+You will create a new vim configuration using `mvim --new config_name` and it will create it's vimrc and vim directory inside of .mvim directory than you can launch vim with your config file using `mvim config_name` or running gvim using `mvim config_name -g`.
 
-You can list all of your configs using "mvim ls".
-For removing a config use this "mvim --remove config_name".
+You can list all of your configs using `mvim ls`.
+For removing a config use this `mvim --remove config_name`.
 
 ## What it can do?
 With mvim you can have and manage more than a single vimrc / gvimrc / .vim directory.
@@ -31,14 +31,14 @@ For now you have to build it yourself!
 * clang / gcc
 * pcre
 
-First clone the repo anywhere you like using "git clone https://github.com/aliagamon/mvim.git"
+First clone the repo anywhere you like using `git clone https://github.com/aliagamon/mvim.git`
 
-Now cd into mvim "cd mvim"
-Make it "make"
-Install it "sudo make intall"
+Now cd into mvim `cd mvim`
+Make it `make`
+Install it `sudo make intall`
 
 ## Hello, world
 Let's make a hellow world config called hello_world.
-Just call "mvim --new hello_world" to create a hello_world configuration in ~/.mvim directory.
-go to "~/.mvim/hello_worldvimrc" file and add "echom __cdir__" to it, now run vim with this configuration file using "mvim hello_world".
+Just call `mvim --new hello_world` to create a hello_world configuration in ~/.mvim directory.
+go to "~/.mvim/hello_worldvimrc" file and add `echom __cdir__` to it, now run vim with this configuration file using `mvim hello_world`.
 Check the messages, it printed path to vim directory in use by vim instance.
