@@ -5,7 +5,8 @@ Multi VIM, light weight VIM configuration manager
 It's a layer on top of vim for making managing and having multiple vimrc files easier.
 You will create a new vim configuration using mvim --new config_name and it will create it's vimrc and vim directory inside of .mvim directory than you can launch vim with your config file using mvim config_name or running gvim using mvim config_name -g.
 
-You can list all of your configs using mvim ls.
+You can list all of your configs using "mvim ls".
+For removing a config use this "mvim --remove config_name".
 
 ## What it can do?
 With mvim you can have and manage more than a single vimrc / gvimrc / .vim directory.
