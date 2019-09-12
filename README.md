@@ -31,6 +31,14 @@ Honestly it's all for now, i have plans to add some special blocks to run python
 The pre processor would not replace viml by any mean it "improve" it's syntax.
 But there is long way to go, and i need feed backs from you guys so i can build a better vim for all of us.
 
+## What i use it for?
+Ok let me just explain what i do with it.
+I have a few repos for vim configs i have, On some of my machines i want to have 2 languages on some i want only one, and on my laptop i want all of them.
+With MVIM approach i can include each of them as a submodule inside a bigger module or just git clone each one of them in my `.mvim` directory.
+I also have a share directory with some .vim files having general plugins like ctrl-p that i use in all my configs, some plugins for c-style languages. I also have some configuration for all of them like my color scheme and global shortcuts. I put all of them in separate files inside my share directory and i just include them where i want it to be.
+
+And i have a config with nothing but goyo and things for focus mode, When i write short stories and editing my md files i use it and from start there is nothing but for example my note and i can even have configs that can open my notes at startup. so i just write `mvim notes` and here i'm looking at my notes how it should be.
+
 ## How to install
 For now you have to build it yourself!
 
