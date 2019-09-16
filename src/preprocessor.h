@@ -51,7 +51,7 @@ void handle_at_includes(char *source, char *dest, const char * share_dir)
 	pcre *reCompiled;
 	pcre_extra *pcreExtra;
 	int pcreExectRet;
-	int subStrVec[30];
+	int subStrVec[90];
 	const char *pcreErrorStr;
 	int pcreErrorOffset;
 	char *aStrRegex;
@@ -75,64 +75,69 @@ void handle_at_includes(char *source, char *dest, const char * share_dir)
 		exit(EXIT_FAILURE);
 	}
 
-	pcreExectRet = pcre_exec(
-			reCompiled,
-			pcreExtra,
-			source,
-			strlen(source),
-			0,
-			0,
-			subStrVec,
-			30);
-	if(pcreExectRet < 0)
+	do
 	{
-		switch(pcreExectRet)
+		pcreExectRet = pcre_exec(
+				reCompiled,
+				pcreExtra,
+				source,
+				strlen(source),
+				0,
+				0,
+				subStrVec,
+				90);
+		printf("%d ret", pcreExectRet);
+		if(pcreExectRet < 0)
 		{
-			case PCRE_ERROR_NOMATCH      : printf("String did not match the pattern\n");        break;
-      			case PCRE_ERROR_NULL         : printf("Something was null\n");                      break;
-     			case PCRE_ERROR_BADOPTION    : printf("A bad option was passed\n");                 break;
-     			case PCRE_ERROR_BADMAGIC     : printf("Magic number bad (compiled re corrupt?)\n"); break;
-     			case PCRE_ERROR_UNKNOWN_NODE : printf("Something kooky in the compiled re\n");      break;
-     			case PCRE_ERROR_NOMEMORY     : printf("Ran out of memory\n");                       break;
-      			default                      : printf("Unknown error\n");
-		}
-	}
-	else
-	{
-		printf("Result: We have a match!\n");
-
-		if(pcreExectRet == 0)
-		{
-			printf("But too many substrings were found to fit in subStrVec!\n");
-			pcreExectRet = 30 / 3;
-		}
-
-		char include_path_buf[1024];
-		char include_content_buf[10240];
-		int inc_res;
-		const char * include_path_format = "%s/%s.vim";
-
-		for(j = 0; j < pcreExectRet; ++j)
-		{
-			pcre_get_substring(source, subStrVec, pcreExectRet, j, &(psubStrMatchStr));
-			printf("Processing include(%2d/%2d): (%2d,%2d): '%s'\n",
-				 j,
-				 pcreExectRet - 1,
-				 subStrVec[j*2],
-				 subStrVec[j*2+1],
-				 psubStrMatchStr);
-			include_content_buf[0] = '\0';
-			sprintf(include_path_buf, include_path_format, share_dir, psubStrMatchStr + 1);
-			inc_res = load_include_file(include_path_buf, include_content_buf);
-			if(inc_res != 0)
+			switch(pcreExectRet)
 			{
-				printf("Could not load include file at '%s'\n", include_path_buf);
-				exit(EXIT_FAILURE);
+				case PCRE_ERROR_NOMATCH      : printf("String did not match the pattern\n");	break;
+				case PCRE_ERROR_NULL	 : printf("Something was null\n");		      break;
+				case PCRE_ERROR_BADOPTION    : printf("A bad option was passed\n");		 break;
+				case PCRE_ERROR_BADMAGIC     : printf("Magic number bad (compiled re corrupt?)\n"); break;
+				case PCRE_ERROR_UNKNOWN_NODE : printf("Something kooky in the compiled re\n");      break;
+				case PCRE_ERROR_NOMEMORY     : printf("Ran out of memory\n");		       break;
+				default		      : printf("Unknown error\n");
 			}
-			source = replace_word(source, psubStrMatchStr, include_content_buf);
 		}
-		pcre_free_substring(psubStrMatchStr);
-	}
+		else
+		{
+			printf("Result: We have a match!\n");
+
+			if(pcreExectRet == 0)
+			{
+				printf("But too many substrings were found to fit in subStrVec!\n");
+				pcreExectRet = 30 / 3;
+			}
+
+			char include_path_buf[1024];
+			char include_content_buf[10240];
+			int inc_res;
+			const char * include_path_format = "%s/%s.vim";
+			printf("%d total", pcreExectRet);
+
+			for(j = 0; j < pcreExectRet; ++j)
+			{
+				pcre_get_substring(source, subStrVec, pcreExectRet, j, &(psubStrMatchStr));
+				printf("Processing include(%2d/%2d): (%2d,%2d): '%s'\n",
+						j,
+						pcreExectRet - 1,
+						subStrVec[j*2],
+						subStrVec[j*2+1],
+						psubStrMatchStr);
+				include_content_buf[0] = '\0';
+				sprintf(include_path_buf, include_path_format, share_dir, psubStrMatchStr + 1);
+				inc_res = load_include_file(include_path_buf, include_content_buf);
+				if(inc_res != 0)
+				{
+					printf("Could not load include file at '%s'\n", include_path_buf);
+					exit(EXIT_FAILURE);
+				}
+				source = replace_word(source, psubStrMatchStr, include_content_buf);
+			}
+			pcre_free_substring(psubStrMatchStr);
+		}
+	} while(pcreExectRet > 0);
 	printf("\n");
 	strcpy(dest, source);
 	pcre_free(reCompiled);
