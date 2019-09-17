@@ -1,5 +1,5 @@
 # MVIM
-Multi VIM, light weight VIM configuration manager
+Multi VIM, light weight [VIM](https://github.com/vim/vim.git) configuration manager
 
 ## What is it?
 It's a layer on top of vim for making managing and having multiple vimrc files easier.
@@ -59,7 +59,7 @@ Go to `~/.mvim/hello_worldvimrc` file and add `echom __cdir__` to it, now run vi
 Check the messages, it printed path to vim directory in use by vim instance.
 
 ## Plugin managers
-All plugin managers should be compatible with MVIM but if you want to have different versions for plugins in diffrent configs i recommend you to use `vim-plug` i don't know about vundle or other plugin managers but you need to specify plugins directory for `vim-plug` i just use this:
+All plugin managers should be compatible with MVIM but if you want to have different versions for plugins in diffrent configs i recommend you to use [vim-plug](https://github.com/junegunn/vim-plug) i don't know about vundle or other plugin managers but you need to specify plugins directory for [vim-plugin](https://github.com/junegunn/vim-plug) i just use this:
 
 	call plug#begin(__cdir__ . "/plugged")
 	Plug 'prabirshrestha/vim-lsp'
