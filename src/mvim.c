@@ -197,6 +197,15 @@ void list_configs(const char* path)
 	if(flag == 0) printf(empty_or_not_found);
 }
 
+void print_help()
+{
+	printf("use it like this : mvim {config name}\n");
+	printf("commands:\n");
+	printf("--new {new config name}        		      :    Create new config\n");
+	printf("--remove {config name you want to remove}     :    Remove all contents of config\n");
+	printf("ls     					      :    List all configs\n");
+}
+
 static inline void process_file(const char * conf, const char * relative_dir, char * save_path)
 {
 	FILE * fp;
@@ -351,6 +360,11 @@ int main(int argc, char *argv[])
 			command = NEW;
 		else if(strncmp(current, "--remove", 9) == 0)
 			command = REMOVE;
+		else if(strncmp(current, "-h", 2) == 0 || strncmp(current, "--help", 6) == 0)
+		{
+			print_help();
+			exit(EXIT_SUCCESS);
+		}
 		else if(strncmp(current, "ls", 2) == 0)
 		{
 			list_configs(MVIM_DB);
