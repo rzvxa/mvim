@@ -233,7 +233,9 @@ static inline void process_file(const char * conf, const char * relative_dir, ch
 	insert_mvim_configuration(buffer1, buffer2, relative_dir);
 	constant_vars_t cvs;
 	cvs.cdir = malloc(strlen(dir) + 1);
+	cvs.fullpath = malloc(strlen(save_path) + 1);
 	strcpy(cvs.cdir, dir);
+	strcpy(cvs.fullpath, save_path);
 	handle_constant_vars(buffer2, buffer1, &cvs);
 	handle_at_includes(buffer1, buffer2, MVIM_SHARE_DIR);
 
@@ -427,18 +429,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf(ANSI_COLOR_YELLOW "%s\nShould i run?(Y/n)\n" ANSI_COLOR_RESET, cmd);
-	char do_run;
-	scanf("%c", &do_run);
-
-	if(do_run == '\n')
-		do_run = 'y';
-
-	if(do_run >= 'A' && do_run <= 'Z')
-		do_run += 32;
-
-	if(do_run == 'y')
-		system(cmd);
+	system(cmd);
 
 	return 0;
 }
