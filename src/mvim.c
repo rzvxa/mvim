@@ -253,9 +253,9 @@ static inline void process_file(const char * conf, const char * relative_dir, ch
 	insert_mvim_configuration(buffer1, buffer2, relative_dir);
 	constant_vars_t cvs;
 	cvs.cdir = malloc(strlen(dir) + 1);
-	cvs.fullpath = malloc(strlen(save_path) + 1);
+	/* cvs.fullpath = malloc(strlen(save_path) + 1); */
 	strcpy(cvs.cdir, dir);
-	strcpy(cvs.fullpath, save_path);
+	/* strcpy(cvs.fullpath, save_path); */
 	handle_constant_vars(buffer2, buffer1, &cvs);
 	handle_at_includes(buffer1, buffer2, MVIM_SHARE_DIR);
 
@@ -491,12 +491,17 @@ int main(int argc, char *argv[])
 		{
 			if(current[0] == '-')
 			{
-				conf_name[0] = '\0';
+				/* conf_name[0] = '\0'; */
 				--optind;
+				printf("here \n");
+				break;
 			}
 			else if(contains_in_db(MVIM_DB, current) == 0)
+			{
 				strcpy(conf_name, current);
-			else
+				printf("here \n");
+			}
+			else if(conf_name[0] == '\0')
 			{
 				printf("Config called %s not exits!\n", current);
 				exit(EXIT_FAILURE);
@@ -541,6 +546,8 @@ int main(int argc, char *argv[])
 			strcat(cmd, argv[optind]);
 		}
 	}
+
+	printf("%s\n", cmd);
 
 	system(cmd);
 
