@@ -167,6 +167,17 @@ static inline void remove_from_database(const char *path, char const *name)
 	fclose(fp);
 }
 
+static inline void rename_in_database(const char *path, char const *old_name, char const *new_name)
+{
+	if(contains_in_db(path, old_name) != 0 || contains_in_db(path, new_name) == 0)
+	{
+		printf("Something went wrong in renaming config called '%s' to '%s' in database!\n", old_name, new_name);
+		exit(EXIT_FAILURE);
+	}
+	remove_from_database(path, old_name);
+	add_to_database(path, new_name);
+}
+
 void list_configs(const char* path)
 {
 	FILE *fp;
@@ -201,9 +212,18 @@ void print_help()
 {
 	printf("use it like this : mvim {config name}\n");
 	printf("commands:\n");
+	printf("ls     					      :    List all configs\n");
 	printf("--new {new config name}        		      :    Create new config\n");
 	printf("--remove {config name you want to remove}     :    Remove all contents of config\n");
-	printf("ls     					      :    List all configs\n");
+	printf("--rename {old config name} {new config name}  :    Renames a config file to new name\n");
+	printf("--version                                     :    Displays version\n");
+	printf("--help                                        :    Displays this message\n");
+}
+
+void print_version()
+{
+	printf("MVIM Version 0.23\n");
+	printf("use --help or -h to display help.\n");
 }
 
 static inline void process_file(const char * conf, const char * relative_dir, char * save_path)
@@ -256,7 +276,7 @@ int main(int argc, char *argv[])
 	char conf_name[1024];
 	conf_name[0] = '\0';
 	size_t optind = 1;
-	enum { NONE, NEW, REMOVE } command = NONE;
+	enum { NONE, NEW, REMOVE, RENAME_1, RENAME_2 } command = NONE;
 	while(optind < argc)
 	{
 		char * current = argv[optind];
@@ -358,13 +378,108 @@ int main(int argc, char *argv[])
 			}
 			exit(EXIT_SUCCESS);
 		}
+		else if(command == RENAME_1)
+			command = RENAME_2;
+		else if(command == RENAME_2)
+		{
+			if(contains_in_db(MVIM_DB, conf_name) != 0)
+			{
+				printf("old config file '%s' does not exists!\n", conf_name);
+				exit(EXIT_FAILURE);
+			}
+			if(contains_in_db(MVIM_DB, current) == 0)
+			{
+				printf("new config file '%s' already exists!\n", current);
+				exit(EXIT_FAILURE);
+			}
+			printf(ANSI_COLOR_YELLOW "Do you really want to rename '%s' to '%s'?(y/N)" ANSI_COLOR_RESET, conf_name, current);
+			char do_rn;
+			scanf("%c", &do_rn);
+			if(do_rn == '\n')
+				do_rn = 'n';
+			if(do_rn >= 'A' && do_rn <= 'Z')
+				do_rn += 32;
+			if(do_rn == 'n')
+			{
+				printf("Aborting...\n");
+				exit(EXIT_FAILURE);
+			}
+			char *old_dir_path;
+			char *new_dir_path;
+			int len = strlen(MVIM_DIR) + strlen(conf_name) + strlen("vim") + 2;
+			old_dir_path = malloc(len);
+			sprintf(old_dir_path, "%s/%svim", MVIM_DIR, conf_name);
+			old_dir_path[len] = '\0';
+			len = strlen(MVIM_DIR) + strlen(current) + strlen("vim") + 2;
+			new_dir_path = malloc(len);
+			sprintf(new_dir_path, "%s/%svim", MVIM_DIR, current);
+			new_dir_path[len] = '\0';
+
+			int dirrn_res = rename(old_dir_path, new_dir_path);
+			if(!dirrn_res)
+				printf(ANSI_COLOR_GREEN "Renamed directory '%s' to '%s'\n" ANSI_COLOR_RESET, old_dir_path, new_dir_path);
+			else
+				printf(ANSI_COLOR_RED "Could not rename '%s' to '%s'\n" ANSI_COLOR_RESET, old_dir_path, new_dir_path);
+
+			char * old_config_path;
+			char * old_gconfig_path;
+			char * new_config_path;
+			char * new_gconfig_path;
+			old_config_path = malloc(len = strlen(MVIM_DIR) + strlen(conf_name) + strlen("vimrc") + 2);
+			sprintf(old_config_path, "%s/%svimrc", MVIM_DIR, conf_name);
+			old_config_path[len] = '\0';
+			new_config_path = malloc(len = strlen(MVIM_DIR) + strlen(current) + strlen("vimrc") + 2);
+			sprintf(new_config_path, "%s/%svimrc", MVIM_DIR, current);
+			new_config_path[len] = '\0';
+
+			int crn_res = rename(old_config_path, new_config_path);
+			if(!crn_res)
+				printf(ANSI_COLOR_GREEN "Renamed file '%s' to '%s'\n" ANSI_COLOR_RESET, old_config_path, new_config_path);
+			else
+				printf(ANSI_COLOR_RED "Could not rename '%s' to '%s'\n" ANSI_COLOR_RESET, old_config_path, new_config_path);
+			old_gconfig_path = malloc(len = strlen(MVIM_DIR) + strlen(conf_name) + strlen("vimrc") + 3);
+			sprintf(old_gconfig_path, "%s/g%svimrc", MVIM_DIR, conf_name);
+			old_gconfig_path[len] = '\0';
+			new_gconfig_path = malloc(len = strlen(MVIM_DIR) + strlen(current) + strlen("vimrc") + 3);
+			sprintf(new_gconfig_path, "%s/g%svimrc", MVIM_DIR, current);
+			new_gconfig_path[len] = '\0';
+			int gcrn_res = rename(old_gconfig_path, new_gconfig_path);
+			if(!gcrn_res)
+				printf(ANSI_COLOR_GREEN "Renamed file '%s' to '%s'\n" ANSI_COLOR_RESET, old_gconfig_path, new_gconfig_path);
+			else
+				printf(ANSI_COLOR_RED "Could not rename '%s' to '%s'\n" ANSI_COLOR_RESET, old_gconfig_path, new_gconfig_path);
+			rename_in_database(MVIM_DB, conf_name, current);
+			printf(ANSI_COLOR_GREEN "Rename '%s' to '%s' in database\n" ANSI_COLOR_RESET, conf_name, current);
+			printf("Finalizing...\n");
+			if(!dirrn_res && !crn_res && ! gcrn_res)
+				printf(ANSI_COLOR_GREEN "Renamed '%s' config to '%s' successfuly!\n" ANSI_COLOR_RESET, conf_name, current);
+			else
+			{
+				printf(
+						ANSI_COLOR_RED
+						"It was not a clean rename action try renaming these file(s) manually:\n"
+						ANSI_COLOR_RESET);
+				if(dirrn_res != 0) printf("rename '%s' to '%s'\n", old_dir_path, new_dir_path);
+				if(crn_res != 0) printf("rename '%s' to '%s'\n", old_config_path, new_config_path);
+				if(gcrn_res != 0) printf("rename '%s' to '%s'\n", old_gconfig_path, new_gconfig_path);
+			}
+			exit(EXIT_SUCCESS);
+		}
+
 		if(strncmp(current, "--new", 6) == 0)
 			command = NEW;
 		else if(strncmp(current, "--remove", 9) == 0)
 			command = REMOVE;
+		else if(strncmp(current, "--rename", 9) == 0)
+			command = RENAME_1;
 		else if(strncmp(current, "-h", 2) == 0 || strncmp(current, "--help", 6) == 0)
 		{
 			print_help();
+			exit(EXIT_SUCCESS);
+		}
+		else if(strncmp(current, "-v", 2) == 0 || strncmp(current, "--version", 9) == 0)
+		{
+			print_version();
 			exit(EXIT_SUCCESS);
 		}
 		else if(strncmp(current, "ls", 2) == 0)
@@ -386,8 +501,6 @@ int main(int argc, char *argv[])
 				printf("Config called %s not exits!\n", current);
 				exit(EXIT_FAILURE);
 			}
-
-			break;
 		}
 	}
 
